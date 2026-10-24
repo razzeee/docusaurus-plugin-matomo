@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      dist-tag: ${{ steps.version.outputs.dist-tag }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Check release tag
+        id: version
+        run: |
+          node <<'JS'
+          const fs = require('node:fs');
+          const { version } = require('./package.json');
+          if (process.env.GITHUB_REF_NAME !== `v${version}`) {
+            throw new Error(`Release tag must match package.json: v${version}`);
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,
+            `dist-tag=${version.includes('-') ? 'next' : 'latest'}\n`);
+          JS
+
+  test:
+    needs: validate
+    uses: ./.github/workflows/test.yml
+
+  publish:
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      DIST_TAG: ${{ needs.validate.outputs.dist-tag }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: pnpm install --frozen-lockfile
+      - name: Pack release
+        run: |
+          mkdir release
+          pnpm pack --pack-destination release
+      # npm's CLI provides the trusted-publishing OIDC exchange. Development,
+      # installation, builds and packing use the pinned pnpm version.
+      - name: Publish to npm
+        run: npm publish ./release/*.tgz --access public --provenance --tag "$DIST_TAG"
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          if [[ "$DIST_TAG" == next ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" ./release/*.tgz \
+            --verify-tag --generate-notes --title "$GITHUB_REF_NAME" "${flags[@]}"

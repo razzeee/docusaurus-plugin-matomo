@@ -4,6 +4,9 @@
 
 Requires Docusaurus 3.10.2+ and Node.js 20+. Supports Docusaurus Faster.
 
+See the [release guide](https://github.com/razzeee/docusaurus-plugin-matomo/blob/main/RELEASING.md)
+for dependency maintenance and publishing.
+
 ## Installation
 
 ```console
