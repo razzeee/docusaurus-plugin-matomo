@@ -1,11 +1,13 @@
-# @gabrielcsapo/docusaurus-plugin-matomo
+# @razzeee/docusaurus-plugin-matomo
 
 > Docusaurus Plugin to work with matomo analytics
+
+Requires Docusaurus 3.10.2+ and Node.js 20+. Supports Docusaurus Faster.
 
 ## Installation
 
 ```console
-pnpm add -D @gabrielcsapo/docusaurus-plugin-matomo
+pnpm add -D @razzeee/docusaurus-plugin-matomo
 ```
 
 ## Usage
@@ -14,7 +16,7 @@ pnpm add -D @gabrielcsapo/docusaurus-plugin-matomo
 module.exports = {
   plugins: [
     [
-      require.resolve("@gabrielcsapo/docusaurus-plugin-matomo"),
+      require.resolve("@razzeee/docusaurus-plugin-matomo"),
       {
         siteId: "TEST_SITE_ID",
         matomoUrl: "TEST_MATOMO_URL",
@@ -25,6 +27,62 @@ module.exports = {
   ],
 };
 ```
+
+## Site search
+
+Enable `siteSearch` in the plugin options to send searches to Matomo's
+[Site Search reports](https://developer.matomo.org/guides/tracking-javascript-guide#internal-search-tracking):
+
+```js
+{
+  siteId: "40",
+  matomoUrl: "https://analytics.example.org",
+  siteUrl: "https://docs.example.org",
+  siteSearch: true,
+}
+```
+
+Search tracking is disabled by default. When enabled:
+
+- Live search queries are recorded after 500 ms without input; Enter records
+  immediately. Empty queries and intermediate IME composition are ignored.
+- The default selector matches `.navbar__search-input`, `.DocSearch-Input` and
+  `input[type="search"]`, including dynamically mounted search dialogs. It works
+  with the search input markup used by Docusaurus DocSearch and
+  `@easyops-cn/docusaurus-search-local` without swizzling their components.
+- Visits to `<baseUrl>search?q=…` record a search instead of a page view, as
+  recommended by Matomo. Both `/search` and `/search/` are recognized.
+- Consecutive identical queries on the same page are deduplicated, including
+  Enter followed by navigation to the results page. Clearing the field or
+  navigating to an ordinary page allows the same query to be recorded again.
+- Search commands use the same Matomo queue and consent/DNT settings as page
+  views. The plugin does not bypass consent or invent a result count.
+
+For a custom search UI, override the selector, delay or results URL:
+
+```js
+siteSearch: {
+  inputSelector: "#documentation-search",
+  debounceMs: 750,
+  path: "/docs/find", // Full pathname, including any site baseUrl
+  queryParameter: "term",
+}
+```
+
+This measures live search queries, not result clicks or successful searches.
+Result counts and categories require integration with your search provider. If
+you already send `trackSiteSearch` commands yourself, leave `siteSearch` disabled
+to avoid counting the same searches twice.
+
+## Migrating from the original plugin
+
+Replace `@gabrielcsapo/docusaurus-plugin-matomo` with
+`@razzeee/docusaurus-plugin-matomo` in your dependencies and plugin configuration.
+Existing Matomo settings remain supported. The malformed no-JavaScript fallback
+has been removed; tracking requires JavaScript. See [CHANGELOG.md](CHANGELOG.md)
+for the changes in 0.2.0.
+
+## Options
 
 | Option                  | Explanation                                                                                                                                                                                                                                                                                                        |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

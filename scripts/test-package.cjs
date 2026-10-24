@@ -27,7 +27,7 @@ try {
 
   const packagePath = path.join(temporary, "node_modules", packed.name);
   const plugin = require(packagePath);
-  const options = { siteId: "40", matomoUrl: "https://analytics.example.org", siteUrl: "https://docs.example.org" };
+  const options = { siteId: "40", matomoUrl: "https://analytics.example.org", siteUrl: "https://docs.example.org", siteSearch: { debounceMs: 500 } };
   process.env.NODE_ENV = "production";
   const instance = plugin({}, options);
   assert(instance.getClientModules().every(fs.existsSync), "Published client modules must exist");

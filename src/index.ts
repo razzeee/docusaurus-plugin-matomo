@@ -16,14 +16,21 @@ type PluginOptions = {
   cookieDomain?: string;
   enableJSErrorTracking?: boolean;
   respectDnt?: boolean;
+  siteSearch?: boolean | {
+    inputSelector?: string;
+    debounceMs?: number;
+    path?: string;
+    queryParameter?: string;
+  };
 }
 
 // Escape '<' so configuration cannot terminate an inline script element.
-function scriptValue(value: string | boolean): string {
-  return JSON.stringify(value).replace(/</g, "\\u003c");
+function scriptValue(value: unknown): string {
+  // All callers provide a defined JSON-serializable value.
+  return JSON.stringify(value)!.replace(/</g, "\\u003c");
 }
 
-function matomoPlugin(context: unknown, options: PluginOptions) {
+function matomoPlugin(context: { baseUrl?: string }, options: PluginOptions) {
   if (!options) {
     throw new Error(
       `You need to specify options arguments use docusaurus-plugin-matomo.`
@@ -44,6 +51,7 @@ function matomoPlugin(context: unknown, options: PluginOptions) {
     cookieDomain,
     enableJSErrorTracking,
     respectDnt = true,
+    siteSearch = false,
   } = options;
 
   if (!baseUrl || !siteId || !siteUrl) {
@@ -54,6 +62,21 @@ function matomoPlugin(context: unknown, options: PluginOptions) {
   }
 
   const matomoUrl = baseUrl.replace(/\/+$/, "");
+  const searchOptions = typeof siteSearch === "object" ? siteSearch : {};
+  const searchConfig = siteSearch && {
+    inputSelector: '.navbar__search-input, .DocSearch-Input, input[type="search"]',
+    debounceMs: 500,
+    path: `${(context.baseUrl || "/").replace(/\/+$/, "")}/search`,
+    queryParameter: "q",
+    ...searchOptions,
+  };
+  if (searchConfig && (
+    !Number.isFinite(searchConfig.debounceMs) || searchConfig.debounceMs < 0 ||
+    !searchConfig.inputSelector.trim() || !searchConfig.queryParameter.trim() ||
+    !searchConfig.path.startsWith("/")
+  )) {
+    throw new Error("Invalid siteSearch options: use a nonnegative debounceMs, nonempty selector/queryParameter and an absolute path.");
+  }
   const isProd = process.env.NODE_ENV === "production";
   const script = localScript ? localScript : `${matomoUrl}/${matomoJsScript}`;
   const dntCondition = respectDnt
@@ -86,6 +109,7 @@ function matomoPlugin(context: unknown, options: PluginOptions) {
             window.dev = ${scriptValue(dev)};
             if (window.dev === true || ${dntCondition}) {
               window._paq = window._paq || [];
+              window.__matomoSiteSearch = ${scriptValue(searchConfig)};
               ${requireConsent ? "window._paq.push(['requireConsent']);" : ""}
               ${
                 requireCookieConsent

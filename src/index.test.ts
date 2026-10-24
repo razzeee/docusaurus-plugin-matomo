@@ -15,6 +15,25 @@ describe("Matomo bootstrap", () => {
     expect(plugin({}, options).getClientModules()).toHaveLength(1);
   });
 
+  test.each([true, { debounceMs: 250, path: "/docs/find", queryParameter: "term", inputSelector: "#search" }])("serializes search settings with base-URL-aware defaults: %j", (siteSearch) => {
+    const result = plugin({ baseUrl: "/docs/" }, {
+      siteId: "40", matomoUrl: "https://analytics.example.org", siteUrl: "https://docs.example.org", siteSearch,
+    });
+    const window: any = {};
+    vm.runInNewContext(result.injectHtmlTags().headTags!.find((tag) => tag.tagName === "script")!.innerHTML!, {
+      window, navigator: {},
+      document: { createElement: () => ({}), getElementsByTagName: () => [{ parentNode: { insertBefore() {} } }] },
+    });
+    expect(window.__matomoSiteSearch.path).toBe(siteSearch === true ? "/docs/search" : "/docs/find");
+    expect(window.__matomoSiteSearch.debounceMs).toBe(siteSearch === true ? 500 : 250);
+  });
+
+  test.each([{ debounceMs: -1 }, { debounceMs: NaN }, { path: "relative" }, { queryParameter: "" }, { inputSelector: "" }])("rejects invalid search configuration: %j", (siteSearch) => {
+    expect(() => plugin({}, {
+      siteId: "40", matomoUrl: "https://analytics.example.org", siteUrl: "https://docs.example.org", siteSearch,
+    })).toThrow("Invalid siteSearch");
+  });
+
   test("rejects missing options", () => {
     // @ts-expect-error Verify runtime validation for JavaScript consumers.
     expect(() => plugin({})).toThrow("specify options");
