@@ -4,8 +4,8 @@
 
 ## Unreleased maintenance branch
 
-This local branch prepares fixes for a maintained fork. The package name and
-repository metadata still refer to upstream; no fork release has been published.
+This fork prepares fixes for a maintained package. The package name still refers
+to upstream; no fork release has been published.
 
 - Fix [upstream issue #2](https://github.com/gabrielcsapo/docusaurus-plugin-matomo/issues/2):
   remove JavaScript incorrectly embedded in a head `<noscript>` tag. It never
@@ -35,10 +35,10 @@ on those three Node versions. TypeScript stays on 5.9 because the current
 Run the regression tests and compile the package:
 
 ```console
-npm ci
-npm test -- --runInBand
-npm run build
-npm run test:package
+pnpm install --frozen-lockfile
+pnpm test --runInBand
+pnpm build
+pnpm test:package
 ```
 
 ### Follow-up issues
@@ -49,14 +49,14 @@ npm run test:package
   not be conflated.
 - Route exclusion is not implemented; upstream advertised `exclude` without
   implementing it. Design its route-matching semantics before adding that API.
-- Before publication, select the fork's package scope, repository URL and version.
+- Before publication, select the fork's package scope and version.
   Add a self-contained browser fixture to CI for repeatable Docusaurus upgrade
   checks; browser integration is currently verified against the Flathub site.
 
 ## Installation
 
 ```console
-npm install @gabrielcsapo/docusaurus-plugin-matomo --save-dev
+pnpm add -D @gabrielcsapo/docusaurus-plugin-matomo
 ```
 
 ## Usage

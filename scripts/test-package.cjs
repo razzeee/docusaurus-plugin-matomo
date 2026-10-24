@@ -7,18 +7,21 @@ const ts = require("typescript");
 
 const root = path.resolve(__dirname, "..");
 const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "matomo-package-"));
-const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 try {
-  const [packed] = JSON.parse(execFileSync(npm, [
+  const packed = JSON.parse(execFileSync(pnpm, [
     "pack", "--json", "--pack-destination", temporary,
   ], { cwd: root, encoding: "utf8" }));
   assert(!packed.files.some(({ path }) => /(^src\/|\.test\.|^coverage\/)/.test(path)),
     "Published package must not contain tests, source files or coverage output");
 
-  fs.writeFileSync(path.join(temporary, "package.json"), '{"private":true}');
-  execFileSync(npm, ["install", "--ignore-scripts", "--no-audit", "--no-fund",
-    "--package-lock=false", path.join(temporary, packed.filename)], {
+  fs.writeFileSync(path.join(temporary, "package.json"), JSON.stringify({
+    private: true,
+    packageManager: require("../package.json").packageManager,
+  }));
+  fs.writeFileSync(path.join(temporary, "pnpm-workspace.yaml"), "autoInstallPeers: false\n");
+  execFileSync(pnpm, ["add", "--ignore-scripts", "--lockfile=false", packed.filename], {
     cwd: temporary, stdio: "pipe",
   });
 

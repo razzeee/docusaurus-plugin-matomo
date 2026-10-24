@@ -1,38 +1,47 @@
 {
   "name": "@gabrielcsapo/docusaurus-plugin-matomo",
   "version": "0.1.2",
+  "packageManager": "pnpm@12.15.0",
   "description": "Docusaurus Plugin to work with matomo analytics",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gabrielcsapo/docusaurus-plugin-matomo.git"
+    "url": "git+https://github.com/razzeee/docusaurus-plugin-matomo.git"
   },
   "author": "Gabriel J. Csapo <gabecsapo@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/gabrielcsapo/docusaurus-plugin-matomo/issues"
+    "url": "https://github.com/razzeee/docusaurus-plugin-matomo/issues"
   },
-  "homepage": "https://github.com/gabrielcsapo/docusaurus-plugin-matomo#readme",
+  "homepage": "https://github.com/razzeee/docusaurus-plugin-matomo#readme",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
-  "engines": { "node": ">=20" },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "jest",
     "test:package": "node scripts/test-package.cjs",
     "build": "node -e \"require('fs').rmSync('dist', {recursive:true, force:true})\" && tsc && cp src/piwik.js dist",
-    "prepack": "npm run build"
+    "prepack": "pnpm build"
   },
   "peerDependencies": {
     "@docusaurus/core": "^3.10.2"
   },
   "peerDependenciesMeta": {
-    "@docusaurus/core": { "optional": true }
+    "@docusaurus/core": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@docusaurus/types": "3.10.2",
-    "@types/node": "^22.0.0",
     "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
     "jest": "^30.5.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "ts-jest": "^29.4.15",
     "typescript": "~5.9.3"
   }
