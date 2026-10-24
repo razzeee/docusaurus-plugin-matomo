@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-      "declaration": false,
+      "declaration": true,
       "declarationMap": false,
       "esModuleInterop": true,
       "importHelpers": true,
@@ -8,12 +8,14 @@
       "moduleResolution": "node",
       "resolveJsonModule": true,
       "skipLibCheck": true,
-      "sourceMap": false,
+      "sourceMap": true,
+      "target": "ES2022",
+      "module": "commonjs",
       "strict": true,
       "typeRoots": ["node_modules/@types"],
-      "types": ["node", "jest"],
+      "types": ["node"],
       "outDir": "./dist"
     },
     "include": ["src"],
-    "exclude": ["**/*.spec.ts", "src/client", "src/server"]
+    "exclude": ["**/*.test.ts", "**/*.spec.ts"]
   }

@@ -14,11 +14,23 @@ repository metadata still refer to upstream; no fork release has been published.
 - Track committed routes using `onRouteDidUpdate` and the supported
   `previousLocation` argument, preserving the delay for document-title updates.
 - Preserve the existing consent, cookie and Do Not Track options.
+- Normalize Matomo URL trailing slashes and serialize inline configuration safely.
+- Cancel superseded delayed page views, use the active Matomo queue, and ignore
+  unchanged routes. Debug mode now works in development as documented.
+- Generate public TypeScript declarations with optional settings correctly typed,
+  and publish only compiled runtime files and declarations.
 
 Validated against Docusaurus 3.10.2, React 19.3.1 and all Faster options enabled.
-Browser checks intercept analytics traffic and verify the Matomo command queue:
-one initial page view, one per navigation, current titles and previous URLs.
-They do not verify ingestion by a live Matomo server.
+Browser checks verify both the Matomo command queue and requests produced by the
+real Matomo JavaScript client: one initial page view, one per navigation, current
+titles and previous URLs. The collector is intercepted, so these checks do not
+send analytics or verify ingestion by a live Matomo server.
+
+The 22 regression tests pass on Node 20, 22 and 24. The package smoke test packs
+and installs the tarball in a clean temporary consumer, checks its entry points
+and contents, and typechecks a minimal TypeScript consumer. CI runs both suites
+on those three Node versions. TypeScript stays on 5.9 because the current
+`ts-jest` peer range excludes TypeScript 7.
 
 Run the regression tests and compile the package:
 
@@ -26,6 +38,7 @@ Run the regression tests and compile the package:
 npm ci
 npm test -- --runInBand
 npm run build
+npm run test:package
 ```
 
 ### Follow-up issues
@@ -34,9 +47,11 @@ npm run build
   is a feature request, not implemented here. It needs an integration point with
   the site's search provider; typing, submitted searches and result clicks should
   not be conflated.
-- Audit the remaining documented options before publishing: upstream documents
-  `exclude`, but does not implement it, and `dev` does not bypass its
-  production-only plugin registration.
+- Route exclusion is not implemented; upstream advertised `exclude` without
+  implementing it. Design its route-matching semantics before adding that API.
+- Before publication, select the fork's package scope, repository URL and version.
+  Add a self-contained browser fixture to CI for repeatable Docusaurus upgrade
+  checks; browser integration is currently verified against the Flathub site.
 
 ## Installation
 
@@ -69,7 +84,6 @@ module.exports = {
 | `siteUrl`               | Legacy required option, retained for configuration compatibility. The broken `noscript` fallback has been removed; this value is no longer used for tracking. |
 | `matomoPhpScript`       | (optional) The name of your Matomo PHP script. Defaults to `piwik.php`                                                                                                                                                                                                                                             |
 | `matomoJsScript`        | (optional) The name of your Matomo JS script. Defaults to `piwik.js`                                                                                                                                                                                                                                               |
-| `exclude`               | (optional) Specify an array of pathnames where tracking code will be excluded. The pathname `/offline-plugin-app-shell-fallback/` is excluded by default.                                                                                                                                                          |
 | `requireConsent`        | (optional) If true, tracking will be disabled until you call `window._paq.push(['setConsentGiven']);`.                                                                                                                                                                                                             |
 | `requireCookieConsent`  | (optional) If true, no cookies will be stored or used until you call `window._paq.push(['setCookieConsentGiven']);`.                                                                                                                                                                                               |
 | `disableCookies`        | (optional) If true, no cookie will be used by Matomo.                                                                                                                                                                                                                                                              |

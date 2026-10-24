@@ -13,18 +13,27 @@
   },
   "homepage": "https://github.com/gabrielcsapo/docusaurus-plugin-matomo#readme",
   "main": "dist/index.js",
-  "types": "src/docusaurus-matomo.d.ts",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
   "scripts": {
     "test": "jest",
-    "build": "tsc && cp src/piwik.js dist"
+    "test:package": "node scripts/test-package.cjs",
+    "build": "node -e \"require('fs').rmSync('dist', {recursive:true, force:true})\" && tsc && cp src/piwik.js dist",
+    "prepack": "npm run build"
   },
-  "dependencies": {
-    "@docusaurus/types": "^2.0.0-beta.14"
+  "peerDependencies": {
+    "@docusaurus/core": "^3.10.2"
+  },
+  "peerDependenciesMeta": {
+    "@docusaurus/core": { "optional": true }
   },
   "devDependencies": {
-    "@types/jest": "^27.4.0",
-    "jest": "^27.0.6",
-    "ts-jest": "^27.1.2",
-    "typescript": "^4.4.3"
+    "@docusaurus/types": "3.10.2",
+    "@types/node": "^22.0.0",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.15",
+    "typescript": "~5.9.3"
   }
 }

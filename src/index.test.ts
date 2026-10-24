@@ -1,68 +1,58 @@
-const plugin = require("./index");
+import plugin = require("./index");
+const vm = require("node:vm");
 
-describe("docusaurus-plugin-matomo", () => {
-  test("should handle not passing in any options", () => {
-    expect(() => {
-      plugin({ siteConfig: { themeConfig: {} } });
-    }).toThrowErrorMatchingInlineSnapshot(
-      `"You need to specify options arguments use docusaurus-plugin-matomo."`
-    );
+describe("Matomo bootstrap", () => {
+  const originalEnvironment = process.env.NODE_ENV;
+  beforeEach(() => { process.env.NODE_ENV = "production"; });
+  afterEach(() => { process.env.NODE_ENV = originalEnvironment; });
+
+  test("accepts the minimal public options type", () => {
+    const options: plugin.Options = {
+      siteId: "40",
+      matomoUrl: "https://analytics.example.org",
+      siteUrl: "https://docs.example.org",
+    };
+    expect(plugin({}, options).getClientModules()).toHaveLength(1);
   });
 
-  test("should be able to render out the right header information given the base matomo options", () => {
-    process.env.NODE_ENV = "production";
+  test("rejects missing options", () => {
+    // @ts-expect-error Verify runtime validation for JavaScript consumers.
+    expect(() => plugin({})).toThrow("specify options");
+  });
 
-    expect(
-      plugin(
-        {
-          siteConfig: {
-            themeConfig: {},
-          },
-        },
-        {
-          siteId: "TEST_SITE_ID",
-          matomoUrl: "TEST_MATOMO_URL",
-          siteUrl: "TEST_SITE_URL",
-        }
-      ).injectHtmlTags()
-    ).toMatchInlineSnapshot(`
-Object {
-  "headTags": Array [
-    Object {
-      "attributes": Object {
-        "href": "TEST_MATOMO_URL/piwik.js",
-        "rel": "preconnect",
+  test.each(["siteId", "matomoUrl", "siteUrl"])("rejects a missing %s", (field) => {
+    const options: any = { siteId: "40", matomoUrl: "https://analytics.example.org", siteUrl: "https://docs.example.org" };
+    delete options[field];
+    expect(() => plugin({}, options)).toThrow("field was missing");
+  });
+
+  test.each([
+    { dnt: "1", respectDnt: true, dev: false, tracks: false },
+    { dnt: "1", respectDnt: false, dev: false, tracks: true },
+    { dnt: "1", respectDnt: true, dev: true, tracks: true },
+  ])("honors explicit DNT/debug behavior: %j", ({ dnt, respectDnt, dev, tracks }) => {
+    const tags = plugin({}, {
+      siteId: "40", matomoUrl: "https://analytics.example.org", siteUrl: "https://docs.example.org",
+      respectDnt, dev, localScript: "/analytics.js", matomoPhpScript: "collect.php", enableJSErrorTracking: true,
+    }).injectHtmlTags();
+    const window: any = { doNotTrack: dnt };
+    const insertBefore = jest.fn();
+    vm.runInNewContext(tags.headTags!.find((tag) => tag.tagName === "script")!.innerHTML!, {
+      window, navigator: {}, console: { debug() {} },
+      document: {
+        createElement: () => ({}),
+        getElementsByTagName: () => [{ parentNode: { insertBefore } }],
       },
-      "tagName": "link",
-    },
-    Object {
-      "innerHTML": "
-            window.dev = undefined
-            if (window.dev === true || !(navigator.doNotTrack === '1' || window.doNotTrack === '1')) {
-              window._paq = window._paq || [];
-              
-              
-              
-              
-              
-              window._paq.push(['setTrackerUrl', 'TEST_MATOMO_URL/piwik.php']);
-              window._paq.push(['setSiteId', 'TEST_SITE_ID']);
-              window._paq.push(['enableHeartBeatTimer']);
-              window.start = new Date();
-              (function() {
-                var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-                g.type='text/javascript'; g.async=true; g.defer=true; g.src='TEST_MATOMO_URL/piwik.js'; s.parentNode.insertBefore(g,s);
-              })();
-              if (window.dev === true) {
-                console.debug('[Matomo] Tracking initialized')
-                console.debug('[Matomo] matomoUrl: TEST_MATOMO_URL, siteId: TEST_SITE_ID')
-              }
-            }
-            ",
-      "tagName": "script",
-    },
-  ],
-}
-`);
+    });
+    expect(Boolean(window._paq)).toBe(tracks);
+    if (tracks) {
+      expect(insertBefore.mock.calls[0][0].src).toBe("/analytics.js");
+      expect(window._paq).toEqual(expect.arrayContaining([
+        ["setTrackerUrl", "https://analytics.example.org/collect.php"],
+        ["enableJSErrorTracking"],
+      ]));
+    } else {
+      expect(insertBefore).not.toHaveBeenCalled();
+    }
   });
 });

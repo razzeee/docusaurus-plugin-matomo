@@ -1,6 +1,7 @@
 import ExecutionEnvironment from "@docusaurus/ExecutionEnvironment";
 
 let first = true;
+let pendingPageView;
 
 function getDuration() {
   const start = window.start || new Date();
@@ -24,14 +25,20 @@ export default (function () {
       if (process.env.NODE_ENV === "production" || window.dev === true) {
         if (!window._paq) return;
 
-        const { _paq, dev } = window;
+        const { dev } = window;
         const url =
           location && location.pathname + location.search + location.hash;
         const prevUrl =
           previousLocation &&
           previousLocation.pathname + previousLocation.search + previousLocation.hash;
 
+        if (url === prevUrl) return;
+        clearTimeout(pendingPageView);
+
         const sendPageView = () => {
+          // Matomo can replace its bootstrap queue while a route is rendering.
+          const { _paq } = window;
+          if (!_paq) return;
           const { title } = document;
 
           prevUrl && _paq.push(["setReferrerUrl", prevUrl]);
@@ -47,13 +54,12 @@ export default (function () {
         };
 
         // Minimum delay for reactHelmet's requestAnimationFrame
-        const delay = Math.max(32, 0);
-        setTimeout(sendPageView, delay);
+        pendingPageView = setTimeout(sendPageView, 32);
 
         if (first) {
           first = false;
 
-          _paq.push([
+          window._paq.push([
             "trackEvent",
             "javascript",
             "load",
