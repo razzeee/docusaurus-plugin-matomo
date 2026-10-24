@@ -37,18 +37,6 @@ Object {
     },
     Object {
       "innerHTML": "
-            var img = document.createElement('img');
-            img.src = \\"TEST_MATOMO_URL/piwik.php?idsite=TEST_SITE_ID&rec=1&url=TEST_SITE_URL\\" + location.pathname;
-            img.style = \\"border:0\\";
-            img.alt = \\"tracker\\";
-
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(img,s);
-            ",
-      "tagName": "noscript",
-    },
-    Object {
-      "innerHTML": "
             window.dev = undefined
             if (window.dev === true || !(navigator.doNotTrack === '1' || window.doNotTrack === '1')) {
               window._paq = window._paq || [];

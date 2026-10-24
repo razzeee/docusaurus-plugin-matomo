@@ -73,18 +73,6 @@ module.exports = function (context: any, options: PluginOptions) {
             },
           },
           {
-            tagName: "noscript",
-            innerHTML: `
-            var img = document.createElement('img');
-            img.src = "${matomoUrl}/${matomoPhpScript}?idsite=${siteId}&rec=1&url=${siteUrl}" + location.pathname;
-            img.style = "border:0";
-            img.alt = "tracker";
-
-            var s = document.getElementsByTagName('script')[0];
-            s.parentNode.insertBefore(img,s);
-            `,
-          },
-          {
             tagName: "script",
             innerHTML: `
             window.dev = ${dev}

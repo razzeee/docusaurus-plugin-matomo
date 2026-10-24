@@ -2,6 +2,42 @@
 
 > Docusaurus Plugin to work with matomo analytics
 
+## Unreleased maintenance branch
+
+This local branch prepares fixes for a maintained fork. The package name and
+repository metadata still refer to upstream; no fork release has been published.
+
+- Fix [upstream issue #2](https://github.com/gabrielcsapo/docusaurus-plugin-matomo/issues/2):
+  remove JavaScript incorrectly embedded in a head `<noscript>` tag. It never
+  provided working no-JavaScript tracking and becomes visible text with the
+  Docusaurus Faster HTML minifier. This version requires JavaScript for tracking.
+- Track committed routes using `onRouteDidUpdate` and the supported
+  `previousLocation` argument, preserving the delay for document-title updates.
+- Preserve the existing consent, cookie and Do Not Track options.
+
+Validated against Docusaurus 3.10.2, React 19.3.1 and all Faster options enabled.
+Browser checks intercept analytics traffic and verify the Matomo command queue:
+one initial page view, one per navigation, current titles and previous URLs.
+They do not verify ingestion by a live Matomo server.
+
+Run the regression tests and compile the package:
+
+```console
+npm ci
+npm test -- --runInBand
+npm run build
+```
+
+### Follow-up issues
+
+- [Upstream #1: Track searches](https://github.com/gabrielcsapo/docusaurus-plugin-matomo/issues/1)
+  is a feature request, not implemented here. It needs an integration point with
+  the site's search provider; typing, submitted searches and result clicks should
+  not be conflated.
+- Audit the remaining documented options before publishing: upstream documents
+  `exclude`, but does not implement it, and `dev` does not bypass its
+  production-only plugin registration.
+
 ## Installation
 
 ```console
@@ -30,7 +66,7 @@ module.exports = {
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `siteId`                | Your Matomo site ID configured in your Matomo installation.                                                                                                                                                                                                                                                        |
 | `matomoUrl`             | The url of your Matomo installation.                                                                                                                                                                                                                                                                               |
-| `siteUrl`               | The url of your site, usually the same as `siteMetadata.siteUrl`. Only used for generating the url for `noscript` image tracking fallback.                                                                                                                                                                         |
+| `siteUrl`               | Legacy required option, retained for configuration compatibility. The broken `noscript` fallback has been removed; this value is no longer used for tracking. |
 | `matomoPhpScript`       | (optional) The name of your Matomo PHP script. Defaults to `piwik.php`                                                                                                                                                                                                                                             |
 | `matomoJsScript`        | (optional) The name of your Matomo JS script. Defaults to `piwik.js`                                                                                                                                                                                                                                               |
 | `exclude`               | (optional) Specify an array of pathnames where tracking code will be excluded. The pathname `/offline-plugin-app-shell-fallback/` is excluded by default.                                                                                                                                                          |

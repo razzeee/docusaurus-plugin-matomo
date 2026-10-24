@@ -20,7 +20,7 @@ export default (function () {
   }
 
   return {
-    onRouteUpdate({ location, prevLocation }) {
+    onRouteDidUpdate({ location, previousLocation }) {
       if (process.env.NODE_ENV === "production" || window.dev === true) {
         if (!window._paq) return;
 
@@ -28,8 +28,8 @@ export default (function () {
         const url =
           location && location.pathname + location.search + location.hash;
         const prevUrl =
-          prevLocation &&
-          prevLocation.pathname + prevLocation.search + prevLocation.hash;
+          previousLocation &&
+          previousLocation.pathname + previousLocation.search + previousLocation.hash;
 
         const sendPageView = () => {
           const { title } = document;
